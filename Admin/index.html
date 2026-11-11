@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Aion.Studio Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--grey:#92938D;--cream:#F5E5C9;--peach:#D29375;--ink:#1a1816;--card:#fbf3e3;--line:#e2d3b6}
+*{box-sizing:border-box;margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;color:var(--ink);background:var(--cream);padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+[hidden]{display:none!important}
+.btn{min-height:42px;padding:0 18px;border-radius:10px;border:1.5px solid var(--ink);background:none;font-weight:600;font-size:.85rem}
+.btn.p{background:var(--ink);color:var(--cream)}.btn.s{min-height:34px;padding:0 12px;font-size:.78rem}.btn.d{border-color:#a8481f;color:#a8481f}
+.btn[disabled]{opacity:.5;cursor:wait}
+input,select,textarea{width:100%;min-height:44px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fffaf0}
+textarea{min-height:90px;resize:vertical}
+label{display:grid;gap:5px;font-size:.8rem;font-weight:600}
+.msg{font-size:.85rem;min-height:1.2em}.msg.e{color:#a8481f}
+/* login */
+#login{min-height:100svh;display:grid;place-items:center;padding:20px}
+#login form{width:min(100%,380px);background:var(--card);border-radius:18px;padding:32px;display:grid;gap:16px}
+#login h1{font-size:1.3rem}.pw{position:relative}.pw button{position:absolute;right:6px;top:6px;min-height:32px;border:0;background:none;font-size:.75rem;font-weight:600}
+/* shell */
+header{display:flex;align-items:center;gap:18px;padding:12px 20px;background:var(--ink);color:var(--cream);position:sticky;top:0;z-index:5}
+header b{letter-spacing:.04em}header nav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1}
+header nav button{border:0;background:none;color:var(--cream);opacity:.7;padding:8px 14px;border-radius:8px;font-weight:600;font-size:.85rem;white-space:nowrap}
+header nav button.on{opacity:1;background:rgba(245,229,201,.14)}
+header .btn{border-color:var(--cream);color:var(--cream);min-height:34px}
+main{max-width:1180px;margin:auto;padding:24px 20px 60px}
+h2{font-size:1.4rem;margin-bottom:18px}h3{font-size:1rem;margin:28px 0 12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.stat{background:var(--card);border-radius:14px;padding:16px}.stat small{font-size:.74rem;font-weight:600;opacity:.7}.stat div{font-size:1.45rem;font-weight:700;margin-top:6px}
+.panel{background:var(--card);border-radius:14px;padding:18px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.row>*{flex:0 1 auto}.row input[type=search]{flex:1 1 200px}
+.tw{overflow-x:auto;background:var(--card);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:.84rem;min-width:620px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}th{font-size:.74rem;opacity:.7}
+td img,.th{width:40px;height:40px;object-fit:contain;border-radius:8px;background:#fff8ea}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;background:var(--line)}.pill.g{background:#cfe0c3}.pill.r{background:#efc3b0}
+.form{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.form .w{grid-column:1/-1}
+.imgs{display:flex;gap:10px;flex-wrap:wrap}.im{width:96px;display:grid;gap:4px;text-align:center;font-size:.72rem}.im img{width:96px;height:96px;object-fit:contain;background:#fff8ea;border-radius:10px;border:2px solid transparent}.im.main img{border-color:var(--peach)}
+.empty{padding:28px;text-align:center;opacity:.7}
+@media(max-width:600px){header{padding:10px 12px;gap:10px}main{padding:18px 14px 50px}}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form id="lf" novalidate>
+    <h1>Aion.Studio admin</h1>
+    <label>Email<input id="em" type="email" autocomplete="username" required></label>
+    <label>Password<span class="pw"><input id="pw" type="password" autocomplete="current-password" required><button type="button" id="eye">Show</button></span></label>
+    <button class="btn p" id="go">Log in</button>
+    <button class="btn" type="button" id="fg">Forgot password</button>
+    <p class="msg" id="lm" role="alert"></p>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header><b>AION.STUDIO</b><nav id="nav"></nav><button class="btn" id="out">Log out</button></header>
+  <main id="v"></main>
+</div>
+
+<script type="module">
+/* ==========================================================
+   PASTE YOUR FIREBASE CONFIG HERE (same values as index.html)
+   ========================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDP235IaQ7DWvOdA4oVCiNJ_EygkxXk2F0",
+  authDomain: "aionstudio-38649.firebaseapp.com",
+  projectId: "aionstudio-38649",
+  storageBucket: "aionstudio-38649.firebasestorage.app",
+  messagingSenderId: "266968563013",
+  appId: "1:266968563013:web:faa2d70e0da96ae072122c",
+  measurementId: "G-VT69JY6E3S"
+};
+const CFG = firebaseConfig.apiKey ? firebaseConfig : null; /* login stays disabled until apiKey is filled */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const inr = n => "\u20B9" + Number(n || 0).toLocaleString("en-IN");
+/* UI gating only. Real enforcement is in firestore.rules / storage.rules via the admins/{uid} document. */
+const VIEWS = { dashboard:["super","product","order","viewer"], products:["super","product"], notifications:["super","product","order","viewer"], activity:["super"], settings:["super"] };
+const STATUSES = ["new","confirmed","processing","shipped","out_for_delivery","delivered","cancelled","returned","refunded"];
+let A, F, S, auth, db, st, role = "viewer", user;
+
+/* ---------- Auth ---------- */
+const lm = (t, e) => { $("lm").textContent = t; $("lm").className = "msg" + (e ? " e" : ""); };
+$("eye").onclick = () => { const h = $("pw").type === "password"; $("pw").type = h ? "text" : "password"; $("eye").textContent = h ? "Hide" : "Show"; };
+$("lf").onsubmit = async e => {
+  e.preventDefault(); if (!auth) { lm(CFG ? "Firebase is still loading or failed to load. Wait a few seconds and try again." : "Firebase is not set up. Fill in firebaseConfig at the top of the script in admin.html and upload the file again.", 1); return; }
+  $("go").disabled = true; $("go").textContent = "Logging in…"; lm("");
+  try { await A.signInWithEmailAndPassword(auth, $("em").value.trim(), $("pw").value); }
+  catch (err) { lm(["auth/invalid-credential","auth/wrong-password","auth/user-not-found","auth/invalid-email"].includes(err.code) ? "Email or password is incorrect." : err.code === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes, then try again." : "Couldn't log in. Check your connection and try again.", 1); }
+  $("go").disabled = false; $("go").textContent = "Log in";
+};
+$("fg").onclick = async () => {
+  const em = $("em").value.trim(); if (!em) return lm("Enter your email first.", 1);
+  try { await A.sendPasswordResetEmail(auth, em); } catch {}
+  lm("If that email belongs to an administrator, a reset link is on its way.");
+};
+$("out").onclick = () => A.signOut(auth);
+
+async function boot() {
+  if (!CFG) { lm("Firebase is not set up yet. Fill in firebaseConfig at the top of the script in admin.html and upload the file again.", 1); return; }
+  const b = "https://www.gstatic.com/firebasejs/10.14.1/";
+  const [a, au, f, s] = await Promise.all(["app","auth","firestore","storage"].map(n => import(`${b}firebase-${n}.js`)));
+  const app = a.initializeApp(CFG); A = au; F = f; S = s;
+  auth = au.getAuth(app); db = f.getFirestore(app); st = s.getStorage(app);
+  au.onAuthStateChanged(auth, async u => {
+    if (!u) { $("app").hidden = true; $("login").hidden = false; return; }
+    let ad = null, why = "";
+    try { ad = await F.getDoc(F.doc(db,"admins",u.uid)); } catch (e) { why = e.code || "error"; }
+    if (!ad?.exists()) {
+      await au.signOut(auth);
+      lm(why === "permission-denied" ? "Access denied: the Firestore rules are not published yet, or still the default ones. Publish the rules from firestore.rules."
+        : why ? `Couldn't check admin access (${why}). Check your connection and the Firebase config, then try again.`
+        : `Access denied. No document found at admins/${u.uid} in project "${CFG.projectId}". Create it with that exact ID and a field role = super.`, 1);
+      return;
+    }
+    user = u; role = ["super","product","order","viewer"].includes(ad.data().role) ? ad.data().role : "viewer";
+    $("login").hidden = true; $("app").hidden = false; $("pw").value = ""; nav();
+  });
+}
+boot().catch(() => lm("Couldn't connect to Firebase. Refresh to try again.", 1));
+
+/* ---------- Routing ---------- */
+const allowed = () => Object.keys(VIEWS).filter(k => VIEWS[k].includes(role));
+let unread = 0;
+function renderNav(cur) {
+  $("nav").innerHTML = allowed().map(k => `<button data-v="${k}" class="${k === cur ? "on" : ""}">${k[0].toUpperCase() + k.slice(1)}${k === "notifications" && unread ? ` (${unread})` : ""}</button>`).join("");
+}
+async function refreshBadge() {
+  try { const s = await F.getDocs(F.query(F.collection(db,"notifications"), F.orderBy("createdAt","desc"), F.limit(50)));
+    unread = s.docs.filter(d => !(d.data().readBy || []).includes(user.uid)).length; renderNav(document.querySelector("#nav .on")?.dataset.v); } catch {}
+}
+function nav() { renderNav(); go(location.hash.slice(1)); refreshBadge(); }
+$("nav").onclick = e => { const k = e.target.dataset.v; if (k) { location.hash = k; go(k); } };
+function go(k) {
+  if (!allowed().includes(k)) k = "dashboard"; /* manual URL to a forbidden view falls back */
+  [...$("nav").children].forEach(b => b.classList.toggle("on", b.dataset.v === k));
+  ({ dashboard, products, notifications, activity, settings })[k]();
+}
+const load = t => $("v").innerHTML = `<p class="empty">${t}</p>`;
+const fail = () => $("v").innerHTML = `<p class="empty">Couldn't load data. Check your connection and permissions, then refresh.</p>`;
+
+/* ---------- Audit trail: append-only (rules allow create only) ---------- */
+const snap = p => p ? { name:p.name ?? null, price:p.price ?? null, salePrice:p.salePrice ?? null, stock:p.stock ?? null, published:!!p.published, image:p.image ?? null } : null;
+async function logAction(type, recordId, before = null, after = null) {
+  try { await F.addDoc(F.collection(db,"activityLogs"), { adminId:user.uid, adminEmail:user.email, type, recordId, before, after, at:F.serverTimestamp() }); }
+  catch { alert("The change was saved, but its activity-log entry failed. Tell the Super Admin."); }
+}
+
+/* ---------- Dashboard (all figures computed from Firestore) ---------- */
+const when = o => o.createdAt?.toDate?.() || new Date(0);
+const isSale = o => o.paymentStatus === "paid" && !["cancelled","returned","refunded"].includes(o.status);
+const dayKey = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+
+async function dashboard() {
+  load("Loading dashboard…");
+  try {
+    const { collection, getDocs, query, orderBy, limit, getCountFromServer } = F;
+    const [os, ps, uc] = await Promise.all([
+      getDocs(query(collection(db,"orders"), orderBy("createdAt","desc"), limit(500))),
+      getDocs(collection(db,"products")), getCountFromServer(collection(db,"users"))]);
+    const orders = os.docs.map(d => ({ id:d.id, ...d.data() })), prods = ps.docs.map(d => ({ id:d.id, ...d.data() }));
+    const pmap = Object.fromEntries(prods.map(p => [p.id, p])), today = dayKey(new Date());
+    const sales = orders.filter(isSale), sum = l => l.reduce((a,o) => a + (o.total||0), 0);
+    const units = sales.reduce((a,o) => a + (o.items||[]).reduce((x,i) => x + (i.qty||0), 0), 0);
+    const low = prods.filter(p => p.stock <= (p.lowStock ?? 5));
+    const card = (l,v) => `<div class="stat"><small>${l}</small><div>${v}</div></div>`;
+    const cnt = Object.fromEntries(STATUSES.map(s => [s, orders.filter(o => o.status === s).length]));
+    $("v").innerHTML = `<h2>Dashboard</h2>
+      <div class="stats">${card("Total revenue",inr(sum(sales)))}${card("Today's revenue",inr(sum(sales.filter(o => dayKey(when(o)) === today))))}
+      ${card("Total orders",orders.length)}${card("Today's orders",orders.filter(o => dayKey(when(o)) === today).length)}${card("Pending orders",cnt.new)}
+      ${card("Total products",prods.length)}${card("Published",prods.filter(p => p.published).length)}${card("Customers",uc.data().count)}
+      ${card("Units sold",units)}${card("Low-stock products",low.length)}</div>
+      <p class="msg" style="margin-top:8px">Revenue counts paid orders that are not cancelled, returned or refunded. Based on the latest ${orders.length} orders.</p>
+      <h3>Sales overview</h3><div class="panel"><div class="row"><select id="rg" style="width:auto"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></div><div id="ch"></div></div>
+      <h3>Order status</h3><div class="stats">${STATUSES.map(s => card(s.replace(/_/g," "), cnt[s])).join("")}</div>
+      <h3>Best-selling products</h3><div id="bs"></div>
+      <h3>Recent orders</h3><div class="tw">${orders.length ? `<table><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr>${orders.slice(0,8).map(o => `<tr><td>${esc(o.id.slice(0,8))}</td><td>${esc(o.customerName)}</td><td>${(o.items||[]).reduce((a,i)=>a+i.qty,0)}</td><td>${inr(o.total)}</td><td><span class="pill ${o.paymentStatus==="paid"?"g":o.paymentStatus==="failed"?"r":""}">${esc(o.paymentStatus)}</span></td><td>${esc(o.status)}</td><td>${when(o).toLocaleDateString("en-IN")}</td></tr>`).join("")}</table>` : `<p class="empty">No orders yet.</p>`}</div>`;
+    const chart = () => {
+      const n = +$("rg").value, days = [], m = {};
+      for (let i = n-1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate()-i); const k = dayKey(d); days.push(k); m[k] = { r:0, c:0 }; }
+      sales.forEach(o => { const k = dayKey(when(o)); if (m[k]) { m[k].r += o.total||0; m[k].c++; } });
+      const mx = Math.max(1, ...days.map(k => m[k].r)), w = 100 / n;
+      $("ch").innerHTML = sales.length ? `<svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width:100%;height:200px" role="img" aria-label="Revenue per day">${days.map((k,i) => `<rect x="${i*w+w*.15}" width="${w*.7}" y="${40-m[k].r/mx*38}" height="${m[k].r/mx*38}" fill="#D29375"><title>${k}: ${inr(m[k].r)}, ${m[k].c} orders</title></rect>`).join("")}</svg><p class="msg">Peak day: ${inr(mx)}. Hover a bar for its date and order count.</p>` : `<p class="empty">No paid orders in this period.</p>`;
+    };
+    $("rg").onchange = chart; chart();
+    const agg = {}; sales.forEach(o => (o.items||[]).forEach(i => { const a = agg[i.productId] ||= { id:i.productId, name:i.name, u:0, r:0 }; a.u += i.qty; a.r += i.qty * (i.price||0); }));
+    const top = Object.values(agg).sort((a,b) => b.u - a.u).slice(0,5);
+    $("bs").innerHTML = top.length ? `<div class="tw"><table><tr><th></th><th>Product</th><th>Units sold</th><th>Revenue</th><th>Stock</th></tr>${top.map(t => `<tr><td>${pmap[t.id]?.image ? `<img src="${esc(pmap[t.id].image)}" alt="">` : ""}</td><td>${esc(pmap[t.id]?.name || t.name)}</td><td>${t.u}</td><td>${inr(t.r)}</td><td>${pmap[t.id]?.stock ?? "Deleted"}</td></tr>`).join("")}</table></div>` : `<p class="empty">No sales yet.</p>`;
+  } catch { fail(); }
+}
+
+/* ---------- Products ---------- */
+let plist = [];
+async function products() {
+  load("Loading products…");
+  try {
+    const { collection, getDocs } = F;
+    plist = (await getDocs(collection(db,"products"))).docs.map(d => ({ id:d.id, ...d.data() }))
+      .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    plist_ui();
+  } catch { fail(); }
+}
+function plist_ui() {
+  $("v").innerHTML = `<h2>Products</h2><div class="row"><input type="search" id="q" placeholder="Search by name, ID or SKU"><select id="fs" style="width:auto"><option value="">All status</option><option value="1">Published</option><option value="0">Draft / hidden</option></select><button class="btn p" id="new">Add product</button></div><div class="tw" id="pt"></div>`;
+  const draw = () => {
+    const q = $("q").value.toLowerCase(), s = $("fs").value;
+    const l = plist.filter(p => (!q || [p.name,p.id,p.sku].some(x => String(x||"").toLowerCase().includes(q))) && (!s || !!p.published === (s === "1")));
+    $("pt").innerHTML = l.length ? `<table><tr><th></th><th>Name</th><th>ID</th><th>Category</th><th>Price</th><th>Sale</th><th>Stock</th><th>Status</th><th></th></tr>${l.map(p => `<tr><td>${p.image ? `<img src="${esc(p.image)}" alt="">` : `<div class="th"></div>`}</td><td>${esc(p.name)}</td><td>${esc(p.id)}</td><td>${esc(p.category)}</td><td>${inr(p.price)}</td><td>${p.salePrice ? inr(p.salePrice) : "-"}</td><td>${p.stock}${p.stock <= (p.lowStock ?? 5) ? ` <span class="pill r">${p.stock <= 0 ? "Out" : "Low"}</span>` : ""}</td><td><span class="pill ${p.published ? "g" : ""}">${p.published ? "Published" : "Hidden"}</span></td>
+      <td><button class="btn s" data-e="${esc(p.id)}">Edit</button> <button class="btn s" data-t="${esc(p.id)}">${p.published ? "Unpublish" : "Publish"}</button> <button class="btn s d" data-x="${esc(p.id)}">Delete</button></td></tr>`).join("")}</table>` : `<p class="empty">${plist.length ? "No products match." : "No products yet. Add your first watch."}</p>`;
+  };
+  $("q").oninput = $("fs").onchange = draw; draw();
+  $("new").onclick = () => editor();
+  $("pt").onclick = async e => {
+    const d = e.target.dataset, p = plist.find(x => x.id === (d.e || d.t || d.x)); if (!p) return;
+    try {
+      if (d.e) editor(p);
+      if (d.t) { await F.updateDoc(F.doc(db,"products",p.id), { published: !p.published }); const b = snap(p); p.published = !p.published; draw(); await logAction(p.published ? "Product Published" : "Product Unpublished", p.id, b, snap(p)); }
+      if (d.x && confirm(`Delete "${p.name}"? Past orders keep their own copy of the item details.`)) { await F.deleteDoc(F.doc(db,"products",p.id)); plist = plist.filter(x => x !== p); draw(); await logAction("Product Deleted", p.id, snap(p), null); }
+    } catch { alert("That change was not saved. You may not have permission, or the connection dropped."); }
+  };
+}
+
+function editor(p) {
+  const id = p?.id || F.doc(F.collection(db,"products")).id;
+  let gal = [...(p?.gallery || (p?.image ? [p.image] : []))];
+  const val = (k, d = "") => esc(p?.[k] ?? d);
+  $("v").innerHTML = `<h2>${p ? "Edit" : "Add"} product</h2><form class="form panel" id="pf" novalidate>
+    <label>Name<input name="name" value="${val("name")}" required></label><label>SKU<input name="sku" value="${val("sku")}"></label>
+    <label>Category<input name="category" value="${val("category")}" placeholder="Men's Watches"></label>
+    <label>Regular price (INR)<input name="price" type="number" min="0" step="1" value="${val("price")}" required></label>
+    <label>Sale price (INR, optional)<input name="salePrice" type="number" min="0" step="1" value="${val("salePrice")}"></label>
+    <label>Stock<input name="stock" type="number" min="0" step="1" value="${val("stock",0)}" required></label>
+    <label>Low-stock alert at<input name="lowStock" type="number" min="0" step="1" value="${val("lowStock",5)}"></label>
+    <label class="w">Short description<input name="shortDesc" value="${val("shortDesc")}"></label>
+    <label class="w">Full description<textarea name="description">${val("description")}</textarea></label>
+    <div class="w"><label>Images (JPG, PNG or WebP, up to 5 MB each)<input type="file" id="fi" accept="image/jpeg,image/png,image/webp" multiple></label><p class="msg" id="up"></p><div class="imgs" id="im"></div></div>
+    <label><span><input type="checkbox" name="published" ${p?.published ? "checked" : ""} style="width:auto;min-height:0"> Published</span></label>
+    <label><span><input type="checkbox" name="featured" ${p?.featured ? "checked" : ""} style="width:auto;min-height:0"> Featured</span></label>
+    <label><span><input type="checkbox" name="bestSeller" ${p?.bestSeller ? "checked" : ""} style="width:auto;min-height:0"> Best seller</span></label>
+    <div class="w row"><button class="btn p" id="sv">Save product</button><button class="btn" type="button" id="cx">Cancel</button><span class="msg" id="pm"></span></div></form>`;
+  const imgs = () => { $("im").innerHTML = gal.map((u,i) => `<div class="im ${i===0?"main":""}"><img src="${esc(u)}" alt=""><span>${i===0?"Main":`<a href="#" data-m="${i}">Make main</a>`}</span><a href="#" data-r="${i}">Remove</a></div>`).join(""); };
+  imgs();
+  $("im").onclick = e => { e.preventDefault(); const d = e.target.dataset; if (d.m) gal.unshift(...gal.splice(+d.m,1)); if (d.r) gal.splice(+d.r,1); imgs(); };
+  $("fi").onchange = async e => {
+    for (const f of e.target.files) {
+      if (!["image/jpeg","image/png","image/webp"].includes(f.type)) { $("up").textContent = `${f.name}: only JPG, PNG or WebP files are allowed.`; continue; }
+      if (f.size > 5 * 1024 * 1024) { $("up").textContent = `${f.name} is over 5 MB. Choose a smaller file.`; continue; }
+      try {
+        const t = S.uploadBytesResumable(S.ref(st, `products/${id}/${Date.now()}-${f.name.replace(/[^\w.-]/g,"_")}`), f);
+        t.on("state_changed", s => $("up").textContent = `Uploading ${f.name}: ${Math.round(s.bytesTransferred / s.totalBytes * 100)}%`);
+        await t; gal.push(await S.getDownloadURL(t.snapshot.ref)); $("up").textContent = "Upload complete."; imgs();
+      } catch { $("up").textContent = `${f.name} didn't upload. Check your connection and try again.`; }
+    }
+    e.target.value = "";
+  };
+  $("cx").onclick = products;
+  $("pf").onsubmit = async e => {
+    e.preventDefault(); const f = new FormData($("pf")), n = k => f.get(k) === "" ? null : Number(f.get(k));
+    const name = f.get("name").trim(), price = n("price"), sale = n("salePrice"), stock = n("stock");
+    const bad = !name ? "Enter a product name." : !(price > 0) ? "Enter a regular price above 0." : sale != null && sale >= price ? "Sale price must be lower than the regular price." : !(stock >= 0) ? "Enter the stock quantity." : "";
+    if (bad) { $("pm").className = "msg e"; $("pm").textContent = bad; return; }
+    $("sv").disabled = true; $("pm").className = "msg"; $("pm").textContent = "Saving…";
+    const data = { name, sku: f.get("sku").trim(), category: f.get("category").trim(), price, salePrice: sale || 0, stock, lowStock: n("lowStock") ?? 5,
+      shortDesc: f.get("shortDesc").trim(), description: f.get("description").trim(), image: gal[0] || "", gallery: gal,
+      published: f.has("published"), featured: f.has("featured"), bestSeller: f.has("bestSeller"), updatedAt: F.serverTimestamp() };
+    if (!p) data.createdAt = F.serverTimestamp();
+    try { await F.setDoc(F.doc(db,"products",id), data, { merge: true });
+      const a = snap(data); await logAction(p ? "Product Updated" : "Product Created", id, snap(p), a);
+      if (p && (p.price !== a.price || (p.salePrice || 0) !== a.salePrice)) await logAction("Product Price Changed", id, { price:p.price, salePrice:p.salePrice ?? 0 }, { price:a.price, salePrice:a.salePrice });
+      if (p && p.image !== a.image) await logAction("Product Image Changed", id, { image:p.image ?? null }, { image:a.image });
+      products(); }
+    catch { $("sv").disabled = false; $("pm").className = "msg e"; $("pm").textContent = "Not saved. You may not have permission, or the connection dropped."; }
+  };
+}
+
+/* ---------- Notifications (created by Cloud Functions; read state is per administrator) ---------- */
+const NLINK = { new_order:"dashboard", payment_success:"dashboard", payment_failed:"dashboard", low_stock:"products", out_of_stock:"products", order_cancelled:"dashboard", new_customer:"dashboard", email_failure:"dashboard", refund_update:"dashboard" };
+async function notifications() {
+  load("Loading notifications…");
+  try {
+    const { collection, getDocs, query, orderBy, limit, doc, updateDoc, arrayUnion, writeBatch } = F;
+    let l = (await getDocs(query(collection(db,"notifications"), orderBy("createdAt","desc"), limit(50)))).docs.map(d => ({ id:d.id, ...d.data() }));
+    const isU = n => !(n.readBy || []).includes(user.uid);
+    const draw = () => {
+      unread = l.filter(isU).length; renderNav("notifications");
+      $("v").innerHTML = `<h2>Notifications</h2><div class="row"><button class="btn" id="ma" ${unread ? "" : "disabled"}>Mark all as read</button><span class="msg">${unread} unread</span></div><div class="tw">${l.length ? `<table><tr><th></th><th>Notification</th><th>Date</th><th></th></tr>${l.map(n => `<tr style="${isU(n) ? "font-weight:700" : "opacity:.75"}"><td>${isU(n) ? "<span class='pill' style='background:#D29375'>New</span>" : ""}</td><td style="white-space:normal">${esc(n.title)}</td><td>${n.createdAt?.toDate().toLocaleString("en-IN") || ""}</td><td>${VIEWS[NLINK[n.type]]?.includes(role) ? `<button class="btn s" data-o="${NLINK[n.type]}">Open</button> ` : ""}${isU(n) ? `<button class="btn s" data-r="${esc(n.id)}">Mark as read</button>` : ""}</td></tr>`).join("")}</table>` : `<p class="empty">No notifications yet.</p>`}</div>`;
+      $("ma").onclick = async () => {
+        $("ma").disabled = true;
+        try { const b = writeBatch(db); l.filter(isU).forEach(n => b.update(doc(db,"notifications",n.id), { readBy: arrayUnion(user.uid) })); await b.commit(); l.forEach(n => n.readBy = [...(n.readBy || []), user.uid]); draw(); }
+        catch { alert("Couldn't mark notifications as read. Try again."); $("ma").disabled = false; }
+      };
+      $("v").querySelector(".tw").onclick = async e => {
+        const d = e.target.dataset;
+        if (d.o) { location.hash = d.o; go(d.o); }
+        if (d.r) { try { await updateDoc(doc(db,"notifications",d.r), { readBy: arrayUnion(user.uid) }); const n = l.find(x => x.id === d.r); n.readBy = [...(n.readBy || []), user.uid]; draw(); } catch { alert("Couldn't mark it as read. Try again."); } }
+      };
+    };
+    draw();
+  } catch { fail(); }
+}
+
+/* ---------- Activity log (Super Admin, read-only) ---------- */
+let acur = null;
+async function activity() {
+  acur = null;
+  $("v").innerHTML = `<h2>Activity log</h2><div class="tw" id="at"><p class="empty">Loading…</p></div><div class="row" style="margin-top:14px"><button class="btn" id="am">Load more</button></div>`;
+  $("am").onclick = () => more(false); more(true);
+}
+async function more(first) {
+  $("am").disabled = true;
+  try {
+    const { collection, getDocs, query, orderBy, limit, startAfter } = F;
+    const s = await getDocs(query(collection(db,"activityLogs"), orderBy("at","desc"), ...(acur ? [startAfter(acur)] : []), limit(25)));
+    if (s.docs.length) acur = s.docs[s.docs.length - 1];
+    if (first) $("at").innerHTML = s.docs.length ? `<table><tr><th>Time</th><th>Administrator</th><th>Action</th><th>Record</th><th>Before / after</th></tr><tbody id="ab"></tbody></table>` : `<p class="empty">No activity recorded yet.</p>`;
+    if (s.docs.length) $("ab").insertAdjacentHTML("beforeend", s.docs.map(d => { const x = d.data(); return `<tr><td>${x.at?.toDate().toLocaleString("en-IN") || ""}</td><td>${esc(x.adminEmail)}</td><td>${esc(x.type)}</td><td>${esc(x.recordId)}</td><td style="white-space:normal;min-width:240px;font-size:.74rem">${esc(JSON.stringify({ before:x.before, after:x.after }))}</td></tr>`; }).join(""));
+    $("am").disabled = s.docs.length < 25;
+  } catch { $("at").innerHTML = `<p class="empty">Couldn't load the activity log.</p>`; }
+}
+
+/* ---------- Store settings -> settings/site (public-read: never put secrets here) ---------- */
+const SF = [["General",[["storeName","Store name"],["description","Store description","t"],["supportEmail","Support email"],["phone","Business phone"],["address","Business address","t"]]],
+  ["Branding",[["social.facebook","Facebook link"],["social.instagram","Instagram link"],["social.twitter","X / Twitter link"],["social.whatsapp","WhatsApp link"],["footerText","Footer information","t"]]],
+  ["Shipping",[["shipping.charge","Shipping charge (INR)","n"],["shipping.freeAbove","Free shipping above (INR)","n"],["shipping.eta","Estimated delivery"],["shipping.enabled","Shipping available","c"]]],
+  ["Email",[["email.senderName","Sender name"],["email.senderEmail","Sender email"]]],
+  ["Policies",[["policies.shipping","Shipping policy","t"],["policies.returns","Return policy","t"],["policies.refund","Refund policy","t"],["policies.privacy","Privacy policy","t"],["policies.terms","Terms and conditions","t"]]]];
+const at = (o, p) => p.split(".").reduce((a, k) => a?.[k], o);
+function put(o, p, v) { const k = p.split("."); k.slice(0,-1).reduce((a, x) => a[x] ||= {}, o)[k.at(-1)] = v; }
+async function settings() {
+  load("Loading settings…");
+  let cur, stat = {};
+  try { cur = (await F.getDoc(F.doc(db,"settings","site"))).data() || {}; try { stat = (await F.getDoc(F.doc(db,"systemStatus","main"))).data() || {}; } catch {} } catch { return fail(); }
+  let logo = cur.logo || "";
+  const yn = v => v === true ? "Yes" : v === false ? "No" : "Not reported yet";
+  $("v").innerHTML = `<h2>Store settings</h2><form class="panel" id="sf" novalidate>${SF.map(([h, fs]) => `<h3>${h}</h3><div class="form">${fs.map(([k, l, t]) => t === "c" ? `<label><span><input type="checkbox" name="${k}" ${at(cur,k) !== false ? "checked" : ""} style="width:auto;min-height:0"> ${l}</span></label>` : t === "t" ? `<label class="w">${l}<textarea name="${k}">${esc(at(cur,k))}</textarea></label>` : `<label>${l}<input name="${k}" ${t === "n" ? 'type="number" min="0"' : ""} value="${esc(at(cur,k))}"></label>`).join("")}</div>`).join("")}
+    <h3>Logo</h3><div class="row"><img id="lg" class="th" alt="" ${logo ? `src="${esc(logo)}"` : "hidden"}><input type="file" id="lf2" accept="image/jpeg,image/png,image/webp" style="max-width:320px"></div>
+    <h3>Payments and email status</h3><p class="msg">Reported by the backend. Gateway and email keys are set in Cloud Functions secrets, never here.</p>
+    <div class="stats"><div class="stat"><small>Payment gateway configured</small><div>${yn(stat.paymentConfigured)}</div></div><div class="stat"><small>Payment verification working</small><div>${yn(stat.paymentVerified)}</div></div><div class="stat"><small>Email provider verified</small><div>${yn(stat.emailVerified)}</div></div></div>
+    <div class="row" style="margin-top:22px"><button class="btn p" id="ss">Save settings</button><span class="msg" id="sm"></span></div></form>`;
+  $("lf2").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!["image/jpeg","image/png","image/webp"].includes(f.type) || f.size > 5 * 1024 * 1024) { $("sm").className = "msg e"; $("sm").textContent = "Logo must be a JPG, PNG or WebP under 5 MB."; return; }
+    try { $("sm").className = "msg"; $("sm").textContent = "Uploading logo…"; const r = S.ref(st, `brand/logo-${Date.now()}`); await S.uploadBytes(r, f); logo = await S.getDownloadURL(r); $("lg").src = logo; $("lg").hidden = false; $("sm").textContent = "Logo uploaded. Save settings to apply."; }
+    catch { $("sm").className = "msg e"; $("sm").textContent = "Logo upload failed. Try again."; }
+  };
+  $("sf").onsubmit = async e => {
+    e.preventDefault(); const f = new FormData($("sf")), next = {}, ch = {};
+    for (const [, fs] of SF) for (const [k, , t] of fs) {
+      const v = t === "c" ? f.has(k) : t === "n" ? (f.get(k) === "" ? null : Number(f.get(k))) : String(f.get(k) ?? "").trim();
+      if (t === "n" && v != null && !(v >= 0)) { $("sm").className = "msg e"; $("sm").textContent = "Enter valid amounts for shipping."; return; }
+      put(next, k, v); const o = at(cur, k); if ((o ?? (t === "c" ? true : "")) !== (v ?? "") && !(t === "n" && o == null && v == null)) ch[k] = [String(o ?? "").slice(0,200), String(v ?? "").slice(0,200)];
+    }
+    if (logo !== (cur.logo || "")) { next.logo = logo; ch.logo = [cur.logo || "", logo]; } 
+    if (!Object.keys(ch).length) { $("sm").className = "msg"; $("sm").textContent = "No changes to save."; return; }
+    $("ss").disabled = true; $("sm").className = "msg"; $("sm").textContent = "Saving…";
+    try { await F.setDoc(F.doc(db,"settings","site"), next, { merge: true }); await logAction("Settings Updated", "settings/site", Object.fromEntries(Object.entries(ch).map(([k, v]) => [k, v[0]])), Object.fromEntries(Object.entries(ch).map(([k, v]) => [k, v[1]]))); cur = { ...cur, ...next }; $("sm").textContent = "Settings saved."; }
+    catch { $("sm").className = "msg e"; $("sm").textContent = "Not saved. You may not have permission, or the connection dropped."; }
+    $("ss").disabled = false;
+  };
+}
+</script>
+</body>
+</html>
