@@ -45,6 +45,17 @@ td img,.th{width:40px;height:40px;object-fit:contain;border-radius:8px;backgroun
 .form{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.form .w{grid-column:1/-1}
 .imgs{display:flex;gap:10px;flex-wrap:wrap}.im{width:96px;display:grid;gap:4px;text-align:center;font-size:.72rem}.im img{width:96px;height:96px;object-fit:contain;background:#fff8ea;border-radius:10px;border:2px solid transparent}.im.main img{border-color:var(--peach)}
 .empty{padding:28px;text-align:center;opacity:.7}
+@media(max-width:700px){
+ .tw{background:none;overflow:visible}
+ table,tbody,tr,td{display:block;min-width:0;width:100%}
+ tr:has(>th){display:none}
+ tr{background:var(--card);border-radius:14px;margin-bottom:12px;padding:8px 2px}
+ td{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px;white-space:normal;border:0;padding:7px 14px;text-align:right}
+ td::before{content:attr(data-label);font-weight:600;font-size:.74rem;opacity:.65;text-align:left}
+ td[data-label=""]::before{display:none}td[data-label=""]{justify-content:flex-start}
+ .btn{min-height:46px}.btn.s{min-height:42px;padding:0 14px}.row>.btn.p,.row>select{flex:1 1 100%}
+ select,input,textarea{font-size:16px}
+}
 @media(max-width:600px){header{padding:10px 12px;gap:10px}main{padding:18px 14px 50px}}
 </style>
 </head>
@@ -85,9 +96,9 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const inr = n => "\u20B9" + Number(n || 0).toLocaleString("en-IN");
 /* UI gating only. Real enforcement is in firestore.rules / storage.rules via the admins/{uid} document. */
-const VIEWS = { dashboard:["super","product","order","viewer"], products:["super","product"], notifications:["super","product","order","viewer"], activity:["super"], settings:["super"] };
-const STATUSES = ["new","confirmed","processing","shipped","out_for_delivery","delivered","cancelled","returned","refunded"];
-let A, F, S, auth, db, st, role = "viewer", user;
+const VIEWS = { dashboard:["super","product","order","viewer"], products:["super","product"], orders:["super","order"], hero:["super","product"], notifications:["super","product","order","viewer"], activity:["super"], settings:["super"] };
+const STATUSES = ["pending","confirmed","shipped","delivered","cancelled"];
+let A, F, auth, db, role = "viewer", user;
 
 /* ---------- Auth ---------- */
 const lm = (t, e) => { $("lm").textContent = t; $("lm").className = "msg" + (e ? " e" : ""); };
@@ -109,9 +120,9 @@ $("out").onclick = () => A.signOut(auth);
 async function boot() {
   if (!CFG) { lm("Firebase is not set up yet. Fill in firebaseConfig at the top of the script in admin.html and upload the file again.", 1); return; }
   const b = "https://www.gstatic.com/firebasejs/10.14.1/";
-  const [a, au, f, s] = await Promise.all(["app","auth","firestore","storage"].map(n => import(`${b}firebase-${n}.js`)));
-  const app = a.initializeApp(CFG); A = au; F = f; S = s;
-  auth = au.getAuth(app); db = f.getFirestore(app); st = s.getStorage(app);
+  const [a, au, f] = await Promise.all(["app","auth","firestore"].map(n => import(`${b}firebase-${n}.js`)));
+  const app = a.initializeApp(CFG); A = au; F = f;
+  auth = au.getAuth(app); db = f.getFirestore(app);
   au.onAuthStateChanged(auth, async u => {
     if (!u) { $("app").hidden = true; $("login").hidden = false; return; }
     let ad = null, why = "";
@@ -129,6 +140,11 @@ async function boot() {
 }
 boot().catch(() => lm("Couldn't connect to Firebase. Refresh to try again.", 1));
 
+new MutationObserver(() => document.querySelectorAll("#v table").forEach(t => {
+  const h = [...t.querySelectorAll("th")].map(x => x.textContent);
+  t.querySelectorAll("td:not([data-label])").forEach(td => td.dataset.label = h[td.cellIndex] ?? "");
+})).observe(document.getElementById("v"), { childList: true, subtree: true });
+
 /* ---------- Routing ---------- */
 const allowed = () => Object.keys(VIEWS).filter(k => VIEWS[k].includes(role));
 let unread = 0;
@@ -144,7 +160,7 @@ $("nav").onclick = e => { const k = e.target.dataset.v; if (k) { location.hash =
 function go(k) {
   if (!allowed().includes(k)) k = "dashboard"; /* manual URL to a forbidden view falls back */
   [...$("nav").children].forEach(b => b.classList.toggle("on", b.dataset.v === k));
-  ({ dashboard, products, notifications, activity, settings })[k]();
+  ({ dashboard, products, orders, hero, notifications, activity, settings })[k]();
 }
 const load = t => $("v").innerHTML = `<p class="empty">${t}</p>`;
 const fail = () => $("v").innerHTML = `<p class="empty">Couldn't load data. Check your connection and permissions, then refresh.</p>`;
@@ -177,7 +193,7 @@ async function dashboard() {
     const cnt = Object.fromEntries(STATUSES.map(s => [s, orders.filter(o => o.status === s).length]));
     $("v").innerHTML = `<h2>Dashboard</h2>
       <div class="stats">${card("Total revenue",inr(sum(sales)))}${card("Today's revenue",inr(sum(sales.filter(o => dayKey(when(o)) === today))))}
-      ${card("Total orders",orders.length)}${card("Today's orders",orders.filter(o => dayKey(when(o)) === today).length)}${card("Pending orders",cnt.new)}
+      ${card("Total orders",orders.length)}${card("Today's orders",orders.filter(o => dayKey(when(o)) === today).length)}${card("Pending orders",cnt.pending)}
       ${card("Total products",prods.length)}${card("Published",prods.filter(p => p.published).length)}${card("Customers",uc.data().count)}
       ${card("Units sold",units)}${card("Low-stock products",low.length)}</div>
       <p class="msg" style="margin-top:8px">Revenue counts paid orders that are not cancelled, returned or refunded. Based on the latest ${orders.length} orders.</p>
@@ -232,7 +248,6 @@ function plist_ui() {
 
 function editor(p) {
   const id = p?.id || F.doc(F.collection(db,"products")).id;
-  let gal = [...(p?.gallery || (p?.image ? [p.image] : []))];
   const val = (k, d = "") => esc(p?.[k] ?? d);
   $("v").innerHTML = `<h2>${p ? "Edit" : "Add"} product</h2><form class="form panel" id="pf" novalidate>
     <label>Name<input name="name" value="${val("name")}" required></label><label>SKU<input name="sku" value="${val("sku")}"></label>
@@ -243,31 +258,17 @@ function editor(p) {
     <label>Low-stock alert at<input name="lowStock" type="number" min="0" step="1" value="${val("lowStock",5)}"></label>
     <label class="w">Short description<input name="shortDesc" value="${val("shortDesc")}"></label>
     <label class="w">Full description<textarea name="description">${val("description")}</textarea></label>
-    <div class="w"><label>Images (JPG, PNG or WebP, up to 5 MB each)<input type="file" id="fi" accept="image/jpeg,image/png,image/webp" multiple></label><p class="msg" id="up"></p><div class="imgs" id="im"></div></div>
+    <label class="w">Main image URL<input name="image" type="url" inputmode="url" placeholder="https://..." value="${val("image")}"></label><label class="w">More image URLs (one per line)<textarea name="more">${esc((p?.gallery || []).filter(u => u !== p?.image).join("\n"))}</textarea></label>
     <label><span><input type="checkbox" name="published" ${p?.published ? "checked" : ""} style="width:auto;min-height:0"> Published</span></label>
     <label><span><input type="checkbox" name="featured" ${p?.featured ? "checked" : ""} style="width:auto;min-height:0"> Featured</span></label>
     <label><span><input type="checkbox" name="bestSeller" ${p?.bestSeller ? "checked" : ""} style="width:auto;min-height:0"> Best seller</span></label>
     <div class="w row"><button class="btn p" id="sv">Save product</button><button class="btn" type="button" id="cx">Cancel</button><span class="msg" id="pm"></span></div></form>`;
-  const imgs = () => { $("im").innerHTML = gal.map((u,i) => `<div class="im ${i===0?"main":""}"><img src="${esc(u)}" alt=""><span>${i===0?"Main":`<a href="#" data-m="${i}">Make main</a>`}</span><a href="#" data-r="${i}">Remove</a></div>`).join(""); };
-  imgs();
-  $("im").onclick = e => { e.preventDefault(); const d = e.target.dataset; if (d.m) gal.unshift(...gal.splice(+d.m,1)); if (d.r) gal.splice(+d.r,1); imgs(); };
-  $("fi").onchange = async e => {
-    for (const f of e.target.files) {
-      if (!["image/jpeg","image/png","image/webp"].includes(f.type)) { $("up").textContent = `${f.name}: only JPG, PNG or WebP files are allowed.`; continue; }
-      if (f.size > 5 * 1024 * 1024) { $("up").textContent = `${f.name} is over 5 MB. Choose a smaller file.`; continue; }
-      try {
-        const t = S.uploadBytesResumable(S.ref(st, `products/${id}/${Date.now()}-${f.name.replace(/[^\w.-]/g,"_")}`), f);
-        t.on("state_changed", s => $("up").textContent = `Uploading ${f.name}: ${Math.round(s.bytesTransferred / s.totalBytes * 100)}%`);
-        await t; gal.push(await S.getDownloadURL(t.snapshot.ref)); $("up").textContent = "Upload complete."; imgs();
-      } catch { $("up").textContent = `${f.name} didn't upload. Check your connection and try again.`; }
-    }
-    e.target.value = "";
-  };
   $("cx").onclick = products;
   $("pf").onsubmit = async e => {
     e.preventDefault(); const f = new FormData($("pf")), n = k => f.get(k) === "" ? null : Number(f.get(k));
     const name = f.get("name").trim(), price = n("price"), sale = n("salePrice"), stock = n("stock");
-    const bad = !name ? "Enter a product name." : !(price > 0) ? "Enter a regular price above 0." : sale != null && sale >= price ? "Sale price must be lower than the regular price." : !(stock >= 0) ? "Enter the stock quantity." : "";
+    const main = f.get("image").trim(), more = f.get("more").split("\n").map(x => x.trim()).filter(Boolean), gal = [main, ...more].filter(Boolean), badUrl = gal.find(u => !/^https:\/\//i.test(u));
+    const bad = badUrl ? `"${badUrl.slice(0,40)}" is not a valid image link. Links must start with https://` : !name ? "Enter a product name." : !(price > 0) ? "Enter a regular price above 0." : sale != null && sale >= price ? "Sale price must be lower than the regular price." : !(stock >= 0) ? "Enter the stock quantity." : "";
     if (bad) { $("pm").className = "msg e"; $("pm").textContent = bad; return; }
     $("sv").disabled = true; $("pm").className = "msg"; $("pm").textContent = "Saving…";
     const data = { name, sku: f.get("sku").trim(), category: f.get("category").trim(), price, salePrice: sale || 0, stock, lowStock: n("lowStock") ?? 5,
@@ -284,7 +285,7 @@ function editor(p) {
 }
 
 /* ---------- Notifications (created by Cloud Functions; read state is per administrator) ---------- */
-const NLINK = { new_order:"dashboard", payment_success:"dashboard", payment_failed:"dashboard", low_stock:"products", out_of_stock:"products", order_cancelled:"dashboard", new_customer:"dashboard", email_failure:"dashboard", refund_update:"dashboard" };
+const NLINK = { new_order:"orders", payment_success:"orders", payment_failed:"orders", low_stock:"products", out_of_stock:"products", order_cancelled:"orders", new_customer:"dashboard", email_failure:"dashboard", refund_update:"orders" };
 async function notifications() {
   load("Loading notifications…");
   try {
@@ -329,7 +330,7 @@ async function more(first) {
 }
 
 /* ---------- Store settings -> settings/site (public-read: never put secrets here) ---------- */
-const SF = [["General",[["storeName","Store name"],["description","Store description","t"],["supportEmail","Support email"],["phone","Business phone"],["address","Business address","t"]]],
+const SF = [["General",[["storeName","Store name"],["logo","Logo image URL"],["description","Store description","t"],["supportEmail","Support email"],["phone","Business phone"],["address","Business address","t"]]],
   ["Branding",[["social.facebook","Facebook link"],["social.instagram","Instagram link"],["social.twitter","X / Twitter link"],["social.whatsapp","WhatsApp link"],["footerText","Footer information","t"]]],
   ["Shipping",[["shipping.charge","Shipping charge (INR)","n"],["shipping.freeAbove","Free shipping above (INR)","n"],["shipping.eta","Estimated delivery"],["shipping.enabled","Shipping available","c"]]],
   ["Email",[["email.senderName","Sender name"],["email.senderEmail","Sender email"]]],
@@ -340,19 +341,12 @@ async function settings() {
   load("Loading settings…");
   let cur, stat = {};
   try { cur = (await F.getDoc(F.doc(db,"settings","site"))).data() || {}; try { stat = (await F.getDoc(F.doc(db,"systemStatus","main"))).data() || {}; } catch {} } catch { return fail(); }
-  let logo = cur.logo || "";
   const yn = v => v === true ? "Yes" : v === false ? "No" : "Not reported yet";
   $("v").innerHTML = `<h2>Store settings</h2><form class="panel" id="sf" novalidate>${SF.map(([h, fs]) => `<h3>${h}</h3><div class="form">${fs.map(([k, l, t]) => t === "c" ? `<label><span><input type="checkbox" name="${k}" ${at(cur,k) !== false ? "checked" : ""} style="width:auto;min-height:0"> ${l}</span></label>` : t === "t" ? `<label class="w">${l}<textarea name="${k}">${esc(at(cur,k))}</textarea></label>` : `<label>${l}<input name="${k}" ${t === "n" ? 'type="number" min="0"' : ""} value="${esc(at(cur,k))}"></label>`).join("")}</div>`).join("")}
-    <h3>Logo</h3><div class="row"><img id="lg" class="th" alt="" ${logo ? `src="${esc(logo)}"` : "hidden"}><input type="file" id="lf2" accept="image/jpeg,image/png,image/webp" style="max-width:320px"></div>
+    
     <h3>Payments and email status</h3><p class="msg">Reported by the backend. Gateway and email keys are set in Cloud Functions secrets, never here.</p>
     <div class="stats"><div class="stat"><small>Payment gateway configured</small><div>${yn(stat.paymentConfigured)}</div></div><div class="stat"><small>Payment verification working</small><div>${yn(stat.paymentVerified)}</div></div><div class="stat"><small>Email provider verified</small><div>${yn(stat.emailVerified)}</div></div></div>
     <div class="row" style="margin-top:22px"><button class="btn p" id="ss">Save settings</button><span class="msg" id="sm"></span></div></form>`;
-  $("lf2").onchange = async e => {
-    const f = e.target.files[0]; if (!f) return;
-    if (!["image/jpeg","image/png","image/webp"].includes(f.type) || f.size > 5 * 1024 * 1024) { $("sm").className = "msg e"; $("sm").textContent = "Logo must be a JPG, PNG or WebP under 5 MB."; return; }
-    try { $("sm").className = "msg"; $("sm").textContent = "Uploading logo…"; const r = S.ref(st, `brand/logo-${Date.now()}`); await S.uploadBytes(r, f); logo = await S.getDownloadURL(r); $("lg").src = logo; $("lg").hidden = false; $("sm").textContent = "Logo uploaded. Save settings to apply."; }
-    catch { $("sm").className = "msg e"; $("sm").textContent = "Logo upload failed. Try again."; }
-  };
   $("sf").onsubmit = async e => {
     e.preventDefault(); const f = new FormData($("sf")), next = {}, ch = {};
     for (const [, fs] of SF) for (const [k, , t] of fs) {
@@ -360,13 +354,87 @@ async function settings() {
       if (t === "n" && v != null && !(v >= 0)) { $("sm").className = "msg e"; $("sm").textContent = "Enter valid amounts for shipping."; return; }
       put(next, k, v); const o = at(cur, k); if ((o ?? (t === "c" ? true : "")) !== (v ?? "") && !(t === "n" && o == null && v == null)) ch[k] = [String(o ?? "").slice(0,200), String(v ?? "").slice(0,200)];
     }
-    if (logo !== (cur.logo || "")) { next.logo = logo; ch.logo = [cur.logo || "", logo]; } 
     if (!Object.keys(ch).length) { $("sm").className = "msg"; $("sm").textContent = "No changes to save."; return; }
     $("ss").disabled = true; $("sm").className = "msg"; $("sm").textContent = "Saving…";
     try { await F.setDoc(F.doc(db,"settings","site"), next, { merge: true }); await logAction("Settings Updated", "settings/site", Object.fromEntries(Object.entries(ch).map(([k, v]) => [k, v[0]])), Object.fromEntries(Object.entries(ch).map(([k, v]) => [k, v[1]]))); cur = { ...cur, ...next }; $("sm").textContent = "Settings saved."; }
     catch { $("sm").className = "msg e"; $("sm").textContent = "Not saved. You may not have permission, or the connection dropped."; }
     $("ss").disabled = false;
   };
+}
+
+/* ---------- Orders: confirm / pending / cancel, mark paid ---------- */
+const OS = ["pending","confirmed","shipped","delivered","cancelled"];
+async function orders() {
+  load("Loading orders…");
+  try {
+    const l = (await F.getDocs(F.query(F.collection(db,"orders"), F.orderBy("createdAt","desc"), F.limit(50)))).docs.map(d => ({ id:d.id, ...d.data() }));
+    const draw = () => {
+      $("v").innerHTML = `<h2>Orders</h2><p class="msg">Latest 50 orders. Customers can cancel their own order within 6 hours of placing it.</p><div class="tw">${l.length ? `<table><tr><th>Order</th><th>Customer</th><th>Deliver to</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th></tr>${l.map(o => `<tr><td>${esc(o.id.slice(0,8))}</td><td>${esc(o.customerName)}<br>${esc(o.phone)}<br>${esc(o.email)}</td><td style="min-width:180px">${esc(o.address?.line)}, ${esc(o.address?.city)} ${esc(o.address?.pincode)}</td><td>${(o.items||[]).map(i => `${esc(i.name)} x${i.qty}`).join("<br>")}</td><td>${inr(o.total)}</td><td>${esc(o.paymentMethod)}: <span class="pill ${o.paymentStatus === "paid" ? "g" : ""}">${esc(o.paymentStatus)}</span>${o.paymentStatus === "paid" ? "" : ` <button class="btn s" data-pay="${esc(o.id)}">Mark paid</button>`}</td><td><select data-st="${esc(o.id)}" style="min-width:130px">${OS.map(x => `<option ${x === o.status ? "selected" : ""}>${x}</option>`).join("")}</select></td><td>${when(o).toLocaleString("en-IN")}</td></tr>`).join("")}</table>` : `<p class="empty">No orders yet.</p>`}</div>`;
+      const t = $("v").querySelector(".tw");
+      t.onchange = async e => {
+        const id = e.target.dataset.st; if (!id) return; const o = l.find(x => x.id === id), to = e.target.value;
+        if (!confirm(`Change order ${id.slice(0,8)} from ${o.status} to ${to}?`)) { e.target.value = o.status; return; }
+        e.target.disabled = true;
+        try { await F.updateDoc(F.doc(db,"orders",id), { status: to, updatedAt: F.serverTimestamp() }); await logAction("Order Status Changed", id, { status:o.status }, { status:to }); o.status = to; draw(); }
+        catch { alert("Status not changed. You may not have permission, or the connection dropped."); e.target.value = o.status; e.target.disabled = false; }
+      };
+      t.onclick = async e => {
+        const id = e.target.dataset.pay; if (!id || !confirm("Mark this order as paid?")) return; e.target.disabled = true;
+        try { await F.updateDoc(F.doc(db,"orders",id), { paymentStatus:"paid", updatedAt: F.serverTimestamp() }); await logAction("Payment Marked Paid", id, { paymentStatus:"unpaid" }, { paymentStatus:"paid" }); l.find(x => x.id === id).paymentStatus = "paid"; draw(); }
+        catch { alert("Not saved. You may not have permission, or the connection dropped."); e.target.disabled = false; }
+      };
+    };
+    draw();
+  } catch { fail(); }
+}
+
+/* ---------- Hero slider: two pasted image links per watch ---------- */
+async function hero() {
+  load("Loading hero slides…");
+  let sl, prods;
+  try {
+    const [hs, ps] = await Promise.all([F.getDocs(F.collection(db,"heroSlides")), F.getDocs(F.collection(db,"products"))]);
+    sl = hs.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+    prods = ps.docs.map(d => ({ id:d.id, ...d.data() }));
+  } catch { return fail(); }
+  const pn = id => prods.find(p => p.id === id)?.name || "(none)";
+  const list = () => {
+    $("v").innerHTML = `<h2>Hero slider</h2><p class="msg">Each watch has two images. The side-angle image shows while the watch is on the left or right. The front image shows when it is in the centre. Paste direct links starting with https://. Transparent PNGs work best.</p><div class="row"><button class="btn p" id="hn">Add watch</button></div><div class="tw">${sl.length ? `<table><tr><th>Order</th><th>Side</th><th>Front</th><th>Headline</th><th>Opens</th><th>Status</th><th></th></tr>${sl.map(x => `<tr><td>${x.order ?? 0}</td><td>${x.sideImage ? `<img src="${esc(x.sideImage)}" alt="">` : ""}</td><td>${x.frontImage ? `<img src="${esc(x.frontImage)}" alt="">` : ""}</td><td>${esc(x.headline)}${x.isCenter ? " <span class='pill g'>Centre</span>" : ""}</td><td>${esc(pn(x.productId))}</td><td><span class="pill ${x.enabled ? "g" : ""}">${x.enabled ? "Visible" : "Hidden"}</span></td><td><button class="btn s" data-e="${esc(x.id)}">Edit</button> <button class="btn s d" data-x="${esc(x.id)}">Delete</button></td></tr>`).join("")}</table>` : `<p class="empty">No hero watches yet. Add three to fill the slider.</p>`}</div>`;
+    $("hn").onclick = () => form();
+    $("v").querySelector(".tw").onclick = async e => {
+      const d = e.target.dataset, x = sl.find(y => y.id === (d.e || d.x)); if (!x) return;
+      if (d.e) form(x);
+      if (d.x && confirm("Delete this hero watch?")) { try { await F.deleteDoc(F.doc(db,"heroSlides",x.id)); sl = sl.filter(y => y !== x); await logAction("Hero Slider Updated", x.id, { headline:x.headline }, null); list(); } catch { alert("Not deleted. You may not have permission."); } }
+    };
+  };
+  const form = x => {
+    $("v").innerHTML = `<h2>${x ? "Edit" : "Add"} hero watch</h2><form class="form panel" id="hf" novalidate>
+      <label>Product it opens<select name="productId"><option value="">Choose a product</option>${prods.map(p => `<option value="${esc(p.id)}" ${p.id === x?.productId ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+      <label>Order (1 shows first)<input name="order" type="number" min="0" step="1" value="${esc(x?.order ?? sl.length + 1)}"></label>
+      <label>Headline<input name="headline" value="${esc(x?.headline)}"></label><label>Subtitle<input name="subtitle" value="${esc(x?.subtitle)}"></label>
+      <label class="w">Side-angle image URL<input name="sideImage" type="url" inputmode="url" placeholder="https://..." value="${esc(x?.sideImage)}"></label>
+      <label class="w">Front image URL<input name="frontImage" type="url" inputmode="url" placeholder="https://..." value="${esc(x?.frontImage)}"></label>
+      <label><span><input type="checkbox" name="enabled" ${x?.enabled !== false ? "checked" : ""} style="width:auto;min-height:0"> Visible on website</span></label>
+      <label><span><input type="checkbox" name="isCenter" ${x?.isCenter ? "checked" : ""} style="width:auto;min-height:0"> Show in the centre first</span></label>
+      <div class="w row"><button class="btn p" id="hs">Save</button><button class="btn" type="button" id="hc">Cancel</button><span class="msg" id="hm"></span></div></form>`;
+    $("hc").onclick = list;
+    $("hf").onsubmit = async e => {
+      e.preventDefault(); const f = new FormData($("hf")), v = k => String(f.get(k) || "").trim(), m = t => { $("hm").className = "msg e"; $("hm").textContent = t; };
+      if (!v("productId")) return m("Choose the product this watch opens.");
+      if (!v("sideImage") && !v("frontImage")) return m("Add at least one image link.");
+      for (const k of ["sideImage","frontImage"]) if (v(k) && !/^https:\/\//i.test(v(k))) return m("Image links must start with https://");
+      const id = x?.id || F.doc(F.collection(db,"heroSlides")).id;
+      const data = { productId: v("productId"), order: Number(v("order")) || 0, headline: v("headline"), subtitle: v("subtitle"), sideImage: v("sideImage"), frontImage: v("frontImage"), enabled: f.has("enabled"), isCenter: f.has("isCenter") };
+      $("hs").disabled = true; $("hm").className = "msg"; $("hm").textContent = "Saving…";
+      try {
+        if (data.isCenter) for (const o of sl) if (o.id !== id && o.isCenter) await F.updateDoc(F.doc(db,"heroSlides",o.id), { isCenter:false });
+        await F.setDoc(F.doc(db,"heroSlides",id), data, { merge:true });
+        await logAction("Hero Slider Updated", id, x ? { headline:x.headline, enabled:!!x.enabled } : null, { headline:data.headline, enabled:data.enabled });
+        hero();
+      } catch { $("hs").disabled = false; m("Not saved. You may not have permission, or the connection dropped."); }
+    };
+  };
+  list();
 }
 </script>
 </body>
