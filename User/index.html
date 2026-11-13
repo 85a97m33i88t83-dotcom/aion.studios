@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Aion.Studio</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"><meta name="theme-color" content="#F5E5C9">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--grey:#92938D;--cream:#F5E5C9;--peach:#D29375;--ink:#1a1816;--pad:clamp(16px,4vw,48px)}
@@ -133,6 +134,42 @@ body.pg .nav{position:static}body.pg #home{display:none}
 .ord{background:#fbf3e3;border-radius:14px;padding:16px;margin-bottom:14px;display:grid;gap:6px;font-size:.9rem}
 .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;background:#e2d3b6}.pill.g{background:#cfe0c3}.pill.r{background:#efc3b0}
 .fm .btn,.pp .btn{padding:0 22px}
+
+[hidden]{display:none!important}
+/* skeletons and image fade-in */
+@keyframes sh{to{background-position:-200% 0}}
+.sk i,.skh,.sk .img,.hsk i,.card .img{background:linear-gradient(90deg,#efe0c4 25%,#f7ebd3 50%,#efe0c4 75%);background-size:200% 100%}
+.sk i,.skh,.sk .img,.hsk i{animation:sh 1.2s infinite linear}
+.sk i{display:block;height:12px;border-radius:6px;margin:8px 0;width:85%}.skh{display:block;height:22px;width:180px;border-radius:6px;margin-bottom:24px}
+.sk .b{padding:14px}.hsk{pointer-events:none}.hsk i{display:block;width:62%;height:78%;border-radius:999px;opacity:.7}
+.card .img img,.big img,.crow img,.w img,.thumbs img{opacity:0;transition:opacity .35s}
+img.ok{opacity:1!important}
+/* cards: image, name, subtitle, price, heart */
+.nr{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.nr h1,.nr h3{flex:1}
+.heart{flex:0 0 auto;padding:4px;color:var(--ink);line-height:0}
+.card h3{font-size:.95rem}.card .sub{font-size:.8rem;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* compact footer (home only) */
+footer{display:block;padding:0;background:var(--ink)}
+footer #ftb{width:100%;min-height:58px;display:flex;justify-content:space-between;align-items:center;padding:0 var(--pad);color:var(--cream);font-weight:600;font-size:.9rem;text-align:left}
+footer #ftb svg{width:20px;height:20px;stroke:var(--cream);fill:none;stroke-width:2;transition:transform .25s}footer.open #ftb svg{transform:rotate(180deg)}
+.ftc{display:none;padding:6px var(--pad) 26px;gap:20px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}footer.open .ftc{display:grid}
+body.pg footer{display:none}
+/* addresses */
+.astrip{display:grid;gap:8px}.addr{text-align:left;padding:12px;border:1.5px solid #e2d3b6;border-radius:12px;background:#fffaf0;font-size:.85rem;line-height:1.5}.addr.on{border-color:var(--ink)}
+/* login tabs */
+.tabs2{display:grid;grid-template-columns:1fr 1fr;background:#e9d9b8;border-radius:10px;padding:4px}.tabs2 button{min-height:40px;border-radius:8px;font-weight:600}.tabs2 button.on{background:var(--ink);color:var(--cream)}
+.or{text-align:center;font-size:.8rem;opacity:.6}
+/* bottom tabs (mobile) */
+.tabs{display:none}
+@media(max-width:760px){
+ body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+ .tabs{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:15;background:#fffaf0;border-top:1px solid #e2d3b6;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
+ .tabs a{display:grid;justify-items:center;gap:3px;font-size:.72rem;font-weight:600;opacity:.6;position:relative}.tabs a.on{opacity:1}
+ .tabs svg{width:24px;height:24px;fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ .tabs .cnt{top:-4px;right:calc(50% - 24px)}
+ .burger,.icons a[href="#/checkout"]{display:none}
+ .hero{height:calc(100svh - 66px - env(safe-area-inset-bottom,0px))}
+}
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
 </style>
 </head>
@@ -143,14 +180,14 @@ body.pg .nav{position:static}body.pg #home{display:none}
     <nav class="links" aria-label="Main"><a href="#/">HOME</a><a href="#/all">ALL PRODUCTS</a><a href="#/about">ABOUT US</a><a href="#/contact">CONTACT US</a></nav>
     <div class="icons">
       <a href="#/all" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/></svg></a>
-      <a href="#/orders" id="acct" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+      <a href="#/account" id="acct" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></a>
       <a href="#/checkout" aria-label="Cart"><span class="cnt" id="cnt" hidden>0</span><svg viewBox="0 0 24 24"><path d="M3 4h3l2.4 10.5h9.2L20 7H7"/><circle cx="9.5" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg></a>
     </div>
     <button class="burger" id="open" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </header>
 
   <div class="track" id="track"></div>
-  <div class="state" id="state">Loading watches…</div>
+  <div class="state" id="state" hidden></div>
   <div class="caption"><h1 id="hl"></h1><p id="sub"></p></div>
 
   <button class="arrow l" id="prev" aria-label="Previous watch"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
@@ -159,16 +196,14 @@ body.pg .nav{position:static}body.pg #home{display:none}
 </section>
 
 <div id="page"></div>
-<main id="home"><div class="sec"><p class="empty">Loading store…</p></div></main>
-<footer>
-  <div><h4>AION.STUDIO</h4><p style="opacity:.8;font-size:.9rem;line-height:1.6">Considered watches for everyday wear.</p></div>
-  <div><h4>Shop</h4><a href="#/all">All products</a><a href="#/checkout">Cart</a><a href="#/orders">My orders</a></div>
-  <div><h4>Help</h4><a href="#/policy/shipping">Shipping policy</a><a href="#/policy/returns">Return policy</a><a href="#/contact">Contact us</a></div>
-  <div><h4>Legal</h4><a href="#/policy/privacy">Privacy policy</a><a href="#/policy/terms">Terms and conditions</a></div>
-</footer>
-<div class="modal" id="auth" hidden><form id="af" novalidate><button type="button" class="x" id="ax" aria-label="Close">×</button><h2 id="atitle">Log in</h2>
+<main id="home"></main>
+<footer id="ft"><button id="ftb" aria-expanded="false"><span>Know more about Aion.Studio</span><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+<div class="ftc"><div><h4>Shop</h4><a href="#/all">All products</a><a href="#/wishlist">Wishlist</a><a href="#/orders">My orders</a></div><div><h4>Help</h4><a href="#/policy/shipping">Shipping policy</a><a href="#/policy/returns">Return policy</a><a href="#/contact">Contact us</a></div><div><h4>Legal</h4><a href="#/policy/privacy">Privacy policy</a><a href="#/policy/terms">Terms and conditions</a></div></div></footer>
+<nav class="tabs" aria-label="Main"><a href="#/" data-t=""><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z"/></svg>Home</a><a href="#/checkout" data-t="checkout"><svg viewBox="0 0 24 24"><path d="M3 4h3l2.4 10.5h9.2L20 7H7"/><circle cx="9.5" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg>Cart<span class="cnt" id="cnt2" hidden>0</span></a><a href="#/orders" data-t="orders"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>My Orders</a></nav>
+<div class="modal" id="auth" hidden><form id="af" novalidate><button type="button" class="x" id="ax" aria-label="Close">×</button>
+<div class="tabs2"><button type="button" id="tin" class="on">Log in</button><button type="button" id="tup">Register</button></div>
 <input id="an" placeholder="Full name" autocomplete="name" hidden><input id="ae" type="email" placeholder="Email" autocomplete="username"><input id="ap" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
-<button class="btn p" id="ago">Continue</button><button class="btn" type="button" id="ag">Continue with Google</button><p class="msg" id="amsg" role="alert"></p><a href="#" id="asw">New here? Create an account</a></form></div>
+<button class="btn p" id="ago">Log in</button><a href="#" id="afg">Forgot password?</a><div class="or">or</div><button class="btn" type="button" id="ag">Continue with Google</button><p class="msg" id="amsg" role="alert"></p></form></div>
 <div class="toast" id="toast" role="status"></div>
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-label="Menu">
@@ -187,20 +222,15 @@ const firebaseConfig = {
 };
 const FIREBASE_CONFIG = firebaseConfig.apiKey ? firebaseConfig : null; /* stays in demo mode until apiKey is filled */
 
-/* Demo slides, used until Firestore `heroSlides` has data */
-const watchSVG = (strap, bezel, face) => `<svg viewBox="0 0 100 200" aria-hidden="true"><rect x="32" y="2" width="36" height="196" rx="14" fill="${strap}"/><circle cx="50" cy="100" r="40" fill="${bezel}"/><circle cx="50" cy="100" r="33" fill="${face}"/><path d="M50 100V78M50 100l14 6" stroke="#F5E5C9" stroke-width="2.5" stroke-linecap="round"/></svg>`;
-const DEMO = [
-  {id:"demo-1",headline:"Smart Watch",subtitle:"New generation",svg:watchSVG("#2b2b2b","#555","#0f1a1a")},
-  {id:"demo-2",headline:"Smart Watch",subtitle:"New generation",svg:watchSVG("#8a5a3a","#d4a76a","#15130f")},
-  {id:"demo-3",headline:"Smart Watch",subtitle:"New generation",svg:watchSVG("#e8801f","#666","#14181c")},
-];
-let slides = DEMO, cur = 0, social = {}, FS, AU, DB, AUTH, me = null, site = {};
+let slides = [], heroReady = !FIREBASE_CONFIG, loaded = !FIREBASE_CONFIG, fresh = false, cur = 0, social = {}, FS, AU, DB, AUTH, me = null, site = {};
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function render(){
   const n = slides.length, track = $("track");
-  if(!n){ $("state").textContent = "No watches published yet."; track.innerHTML=""; return; }
+  if(!heroReady){ if(!track.dataset.sk){track.dataset.sk=1;track.innerHTML=[-1,0,1].map(p=>`<div class="w hsk" data-p="${p}"><i></i></div>`).join("")} return; }
+  if(track.dataset.sk){delete track.dataset.sk;track.innerHTML=""}
+  if(!n){ $("state").hidden=false; $("state").textContent = FIREBASE_CONFIG ? "No watches published yet." : "Add your Firebase config to load the store."; track.innerHTML=""; $("hl").textContent=""; $("sub").textContent=""; return; }
   $("state").hidden = true;
   if(track.children.length !== n){
     track.innerHTML = slides.map((s,i)=>`<div class="w" data-i="${i}" role="link" tabindex="0" aria-label="${esc(s.headline)}">${heroImgs(s,i)}</div>`).join("");
@@ -239,7 +269,7 @@ $("open").onclick = () => drawer(true); $("close").onclick = $("scrim").onclick 
 
 function renderSocial(){
   const map = {facebook:"f",instagram:"ig",twitter:"x",whatsapp:"wa"};
-  const links = Object.keys(map).filter(k => social[k] || !FIREBASE_CONFIG);
+  const links = Object.keys(map).filter(k => social[k]);
   $("social").innerHTML = links.map(k=>`<a href="${esc(social[k]||"#")}" aria-label="${k}" rel="noopener">${map[k]}</a>`).join("");
 }
 
@@ -250,14 +280,13 @@ async function connect(){
   const app = appM.initializeApp(FIREBASE_CONFIG); FS = fs; AU = authM; DB = fs.getFirestore(app); AUTH = authM.getAuth(app);
   const { collection, query, where, onSnapshot, doc } = fs;
   liveHome({db:DB,collection,query,where,onSnapshot,doc});
-  /* heroSlides: {sideImage, frontImage, productId, headline, subtitle, order, enabled, isCenter} */
   onSnapshot(query(collection(DB,"heroSlides"), where("enabled","==",true)), snap => {
     const list = snap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
-    slides = list; const c = list.findIndex(s => s.isCenter); cur = c >= 0 ? c : 0;
-    $("track").innerHTML = ""; render();
-  }, () => { $("state").hidden = false; $("state").textContent = "Couldn't load watches. Refresh to try again."; });
-  onSnapshot(doc(DB,"settings","site"), d => { site = d.data() || {}; social = site.social || {}; renderSocial(); route(); }, () => {});
-  AU.onAuthStateChanged(AUTH, u => { me = u; if (u) $("auth").hidden = true; route(); });
+    if (JSON.stringify(list) !== JSON.stringify(slides)) { slides = list; const c = list.findIndex(s => s.isCenter); cur = c >= 0 ? c : 0; $("track").innerHTML = ""; }
+    heroReady = true; render(); saveCache();
+  }, () => { heroReady = true; slides = []; render(); $("state").hidden = false; $("state").textContent = "Couldn't load watches. Refresh to try again."; });
+  onSnapshot(doc(DB,"settings","site"), d => { site = d.data() || {}; social = site.social || {}; setLogo(); renderSocial(); route(); saveCache(); }, () => {});
+  AU.onAuthStateChanged(AUTH, u => { me = u; addrs = null; if (u) $("auth").hidden = true; route(); });
 }
 
 
@@ -267,38 +296,48 @@ const getCart=()=>{try{return JSON.parse(localStorage.getItem(CK))||{}}catch{ret
 function addCart(id,q=1){const p=products.find(x=>x.id===id);if(!p||p.stock<=0)return false;
   const c=getCart();c[id]=Math.min((c[id]||0)+q,p.stock);setCart(c);return true}
 function setCart(c){try{localStorage.setItem(CK,JSON.stringify(c))}catch{}cartBadge()}
-function cartBadge(){const n=Object.values(getCart()).reduce((a,b)=>a+b,0);$("cnt").hidden=!n;$("cnt").textContent=n}
+function cartBadge(){const n=Object.values(getCart()).reduce((a,b)=>a+b,0);for(const id of ["cnt","cnt2"]){$(id).hidden=!n;$(id).textContent=n}}
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),1800)}
 
 /* ---------- Store: data (Firestore products, categories, settings/home) ---------- */
 const inr=n=>"\u20B9"+Number(n).toLocaleString("en-IN");
-const DP=[["Meridian Rose","#8a5a3a","#d4a76a",12999,9999,12,1,0],["Atlas Steel","#2b2b2b","#555",15999,0,3,1,1],["Dune Sport","#e8801f","#666",8999,6999,0,0,1],["Halo Classic","#5a4a3a","#c9b07a",11999,0,25,1,1],["Nimbus Smart","#1c1c1c","#777",9999,7499,40,0,0],["Vesper Slim","#a9a79f","#e5e1d6",13999,0,8,1,0],["Onyx Field","#333","#444",7499,5999,15,0,1],["Solace Gold","#7a4b2a","#e0b866",17999,14999,2,1,0]];
-let products=DP.map((d,i)=>({id:"demo-"+(i+1),name:d[0],svg:watchSVG(d[1],d[2],"#14181c"),price:d[3],salePrice:d[4],stock:d[5],featured:!!d[6],bestSeller:!!d[7],isNew:i%2===0,category:i%2?"Smart Watches":"Men's Watches",createdAt:100-i}));
-let cats=["Men's Watches","Women's Watches","Smart Watches"].map(n=>({id:n,name:n}));
-let homeCfg={sections:[{key:"categories",on:1},{key:"featured",on:1},{key:"bestsellers",on:1},{key:"offers",on:1},{key:"newarrivals",on:1},{key:"collections",on:1},{key:"all",on:1},{key:"story",on:1}],
-  banner:{title:"Special offers",text:"Selected watches at up to 25% off.",link:"#/all"},collections:[{title:"The Classics",link:"#/all"},{title:"Everyday Smart",link:"#/all"}],
-  story:"Aion.Studio makes considered watches with a quiet, modern character. Every piece is chosen for how it feels on the wrist, day after day."};
+let products=[];
+let cats=[];
+let homeCfg={sections:[{key:"categories",on:1},{key:"featured",on:1},{key:"bestsellers",on:1},{key:"offers",on:1},{key:"newarrivals",on:1},{key:"collections",on:1},{key:"all",on:1},{key:"story",on:1}]};
+/* instant paint from the last real data (refreshed by Firestore a moment later) */
+try{const c=JSON.parse(localStorage.getItem("aion_c")||"null");if(c&&FIREBASE_CONFIG){products=c.products||[];loaded=!!c.products;slides=c.slides||[];heroReady=!!c.slides;cats=c.cats||[];site=c.site||{};social=site.social||{};homeCfg={...homeCfg,...(c.homeCfg||{})}}}catch{}
+const saveCache=()=>{try{localStorage.setItem("aion_c",JSON.stringify({products,slides,cats,site,homeCfg}))}catch{}};
+function setLogo(){const l=document.querySelector(".logo");l.innerHTML=site.logo?`<img src="${esc(site.logo)}" alt="Aion.Studio" style="height:34px;display:block">`:"AION.STUDIO"}
 
 const pct=p=>p.salePrice&&p.salePrice<p.price?Math.round(100-p.salePrice/p.price*100):0;
-function card(p){const d=pct(p),out=p.stock<=0,low=!out&&p.stock<=5,href="#/p/"+encodeURIComponent(p.id);
-  return `<article class="card"><a class="img" href="${href}" aria-label="${esc(p.name)}">${d?`<span class="badge">${d}% off</span>`:""}${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" decoding="async" width="400" height="400">`:p.svg||""}</a>
-  <div class="b"><h3><a href="${href}">${esc(p.name)}</a></h3>
-  <div class="price"><b>${inr(d?p.salePrice:p.price)}</b>${d?`<s>${inr(p.price)}</s>`:""}</div>
-  <span class="stock ${out?"out":low?"low":""}">${out?"Out of stock":low?`Only ${p.stock} left`:"In stock"}</span>
-  <div class="acts"><button class="btn" data-add="${esc(p.id)}" ${out?"disabled":""}>Add to Cart</button><button class="btn p" data-buy="${esc(p.id)}" ${out?"disabled":""}>Shop Now</button></div></div></article>`}
-const grid=(l,msg="Nothing here yet.")=>l.length?`<div class="grid">${l.map(card).join("")}</div>`:`<p class="empty">${msg}</p>`;
-const sec=(h,body,cls="")=>`<section class="sec ${cls}"><div><h2>${h}</h2>${body}</div></section>`;
+const wish=()=>{try{return JSON.parse(localStorage.getItem("aion_wish"))||[]}catch{return[]}};
+const heartI=on=>`<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.2-9.2C1.6 7.8 3.6 4.5 7 4.5c2 0 3.5 1.1 5 3 1.5-1.9 3-3 5-3 3.4 0 5.4 3.3 4.2 6.8-1.7 4.6-9.2 9.2-9.2 9.2z" fill="${on?"#c0392b":"none"}" stroke="${on?"#c0392b":"currentColor"}" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+function card(p){const d=pct(p),out=p.stock<=0,href="#/p/"+encodeURIComponent(p.id),w=wish().includes(p.id);
+  return `<article class="card"><a class="img" href="${href}" aria-label="${esc(p.name)}">${d?`<span class="badge">${d}% off</span>`:""}${out?`<span class="badge" style="left:auto;right:10px;background:var(--ink)">Sold out</span>`:""}${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" decoding="async" width="400" height="400">`:""}</a>
+  <div class="b"><div class="nr"><h3><a href="${href}">${esc(p.name)}</a></h3><button class="heart" data-heart="${esc(p.id)}" aria-label="Save to wishlist" aria-pressed="${w}">${heartI(w)}</button></div><p class="sub">${esc(p.shortDesc||p.category)}</p><div class="price"><b>${inr(d?p.salePrice:p.price)}</b>${d?`<s>${inr(p.price)}</s>`:""}</div></div></article>`}
+function toggleWish(id){let w=wish();const on=!w.includes(id);w=on?[...w,id]:w.filter(x=>x!==id);try{localStorage.setItem("aion_wish",JSON.stringify(w))}catch{}
+  document.querySelectorAll("[data-heart]").forEach(b=>{if(b.dataset.heart===id){b.innerHTML=heartI(on);b.setAttribute("aria-pressed",on)}});if(location.hash==="#/wishlist")wishlistPage()}
+document.addEventListener("click",e=>{const h=e.target.closest("[data-heart]");if(h){e.preventDefault();toggleWish(h.dataset.heart)}});
+
+const skel=n=>`<div class="grid">${Array(n).fill(`<div class="card sk"><div class="img"></div><div class="b"><i></i><i style="width:55%"></i></div></div>`).join("")}</div>`;
+const grid=(l,msg)=>!loaded?skel(4):l.length?`<div class="grid">${l.map(card).join("")}</div>`:(msg?`<p class="empty">${msg}</p>`:"");
+const sec=(h,body,cls="")=>body?`<section class="sec ${cls}"><div><h2>${h}</h2>${body}</div></section>`:"";
 let shown=8;
+const catList=()=>cats.length?cats:[...new Set(products.map(p=>p.category).filter(Boolean))].map(n=>({id:n,name:n}));
+const cts=p=>p.createdAt?.seconds||0;
 const R={
- categories:()=>sec("Shop by category",`<div class="cats">${cats.map(c=>`<a class="cat" href="#/all/${encodeURIComponent(c.id)}">${esc(c.name)}</a>`).join("")}</div>`),
- featured:()=>sec("Featured products",grid(products.filter(p=>p.featured).slice(0,4),"No featured products yet.")),
- bestsellers:()=>sec("Best sellers",grid(products.filter(p=>p.bestSeller).slice(0,4),"No best sellers yet."),"alt"),
- offers:()=>{const b=homeCfg.banner||{};return `<section class="sec"><div class="offer" ${b.image?`style="background:url('${esc(b.image)}') center/cover"`:""}><h2>${esc(b.title)}</h2><p>${esc(b.text)}</p><a class="btn" href="${esc(b.link||"#/all")}">Shop the offers</a></div></section>`},
- newarrivals:()=>sec("New arrivals",grid(products.filter(p=>p.isNew).sort((a,b)=>b.createdAt-a.createdAt).slice(0,4),"No new arrivals yet.")),
- collections:()=>sec("Featured collections",`<div class="cols">${(homeCfg.collections||[]).map(c=>`<a class="col" href="${esc(c.link)}" ${c.image?`style="background:url('${esc(c.image)}') center/cover"`:""}>${esc(c.title)}</a>`).join("")}</div>`),
- all:()=>sec("All watches",grid(products.slice(0,shown))+(products.length>shown?`<button class="btn more" id="more">Load more</button>`:"")+`<a class="btn more" style="width:fit-content" href="#/all">View all ${products.length} watches</a>`,"alt"),
- story:()=>`<section class="sec"><div class="story"><h2>Our story</h2><p>${esc(homeCfg.story)}</p></div></section>`};
-function renderHome(){$("home").innerHTML=(homeCfg.sections||[]).filter(s=>s.on&&R[s.key]).map(s=>R[s.key]()).join("")}
+ categories:()=>{const l=catList();return l.length?sec("Shop by category",`<div class="cats">${l.map(c=>`<a class="cat" href="#/all/${encodeURIComponent(c.id)}">${esc(c.name)}</a>`).join("")}</div>`):""},
+ featured:()=>sec("Featured products",grid(products.filter(p=>p.featured).slice(0,4))),
+ bestsellers:()=>sec("Best sellers",grid(products.filter(p=>p.bestSeller).slice(0,4)),"alt"),
+ offers:()=>{const b=homeCfg.banner;return b?.title?`<section class="sec"><div class="offer" ${b.image?`style="background:url('${esc(b.image)}') center/cover"`:""}><h2>${esc(b.title)}</h2><p>${esc(b.text)}</p><a class="btn" href="${esc(b.link||"#/all")}">Shop the offers</a></div></section>`:""},
+ newarrivals:()=>sec("New arrivals",grid([...products].sort((a,b)=>cts(b)-cts(a)).slice(0,4))),
+ collections:()=>{const l=homeCfg.collections||[];return l.length?sec("Featured collections",`<div class="cols">${l.map(c=>`<a class="col" href="${esc(c.link)}" ${c.image?`style="background:url('${esc(c.image)}') center/cover"`:""}>${esc(c.title)}</a>`).join("")}</div>`):""},
+ all:()=>products.length?sec("All watches",grid(products.slice(0,shown))+(products.length>shown?`<button class="btn more" id="more">Load more</button>`:"")+`<a class="btn more" style="width:fit-content" href="#/all">View all ${products.length} watches</a>`,"alt"):"",
+ story:()=>{const t=homeCfg.story||site.description;return t?`<section class="sec"><div class="story"><h2>Our story</h2><p>${esc(t)}</p></div></section>`:""}};
+function renderHome(){
+  if(!loaded){$("home").innerHTML=`<section class="sec"><div><i class="skh"></i>${skel(8)}</div></section>`;return}
+  const h=(homeCfg.sections||[]).filter(s=>s.on&&R[s.key]).map(s=>R[s.key]()).join("");
+  $("home").innerHTML=h||`<section class="sec"><p class="empty">${FIREBASE_CONFIG?"New watches are coming soon.":"Add your Firebase config to load the store."}</p></section>`}
 $("home").addEventListener("click",e=>{const a=e.target.closest("[data-add]"),b=e.target.closest("[data-buy]");
   if(a&&addCart(a.dataset.add)){toast("Added to cart")}
   if(b)buyNow(b.dataset.buy)
@@ -306,13 +345,12 @@ $("home").addEventListener("click",e=>{const a=e.target.closest("[data-add]"),b=
 
 function liveHome({db,collection,query,where,onSnapshot,doc}){
   const err=()=>{$("home").innerHTML='<div class="sec"><p class="empty">Couldn\'t load the store. Refresh to try again.</p></div>'};
-  onSnapshot(query(collection(db,"products"),where("published","==",true)),s=>{products=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;renderHome();route()},err);
-  onSnapshot(collection(db,"categories"),s=>{cats=s.docs.map(d=>({id:d.id,...d.data()}));renderHome()},()=>{});
-  onSnapshot(doc(db,"settings","home"),d=>{if(d.exists()){homeCfg={...homeCfg,...d.data()};renderHome()}},()=>{});
+  onSnapshot(query(collection(db,"products"),where("published","==",true)),s=>{products=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;fresh=true;saveCache();renderHome();route()},err);
+  onSnapshot(collection(db,"categories"),s=>{cats=s.docs.map(d=>({id:d.id,...d.data()}));saveCache();renderHome()},()=>{});
+  onSnapshot(doc(db,"settings","home"),d=>{if(d.exists()){homeCfg={...homeCfg,...d.data()};saveCache();renderHome()}},()=>{});
 }
 cartBadge();renderHome();
 /* ---------- Pages: #/p/ID  #/all  #/checkout  #/orders  #/about  #/contact  #/policy/x ---------- */
-let loaded = !FIREBASE_CONFIG;
 const pg = h => { $("page").innerHTML = h; };
 const dtime = o => o.createdAt?.toDate ? o.createdAt.toDate() : null;
 const heroI = (u, c, i) => `<img class="${c}" src="${esc(u)}" alt="" loading="${i < 3 ? "eager" : "lazy"}" decoding="async">`;
@@ -321,8 +359,9 @@ const gate = t => `<div class="pp"><h2>${t}</h2><p class="d">You can browse and 
 function route() {
   const [r, a] = location.hash.replace(/^#\/?/, "").split("/"), arg = decodeURIComponent(a || "");
   document.body.classList.toggle("pg", !!r);
+  document.querySelectorAll(".tabs a").forEach(t => t.classList.toggle("on", t.dataset.t === (r || "")));
   if (!r) return;
-  const f = { p:productPage, all:allPage, checkout:checkoutPage, orders:ordersPage }[r];
+  const f = { p:productPage, all:allPage, checkout:checkoutPage, orders:ordersPage, wishlist:wishlistPage, account:accountPage }[r];
   f ? f(arg) : infoPage(r, arg);
 }
 addEventListener("hashchange", () => { route(); scrollTo(0, 0); });
@@ -336,7 +375,7 @@ function productPage(id) {
   if (!p) return pg(`<div class="pp"><a class="back" href="#/">&larr; Back to shop</a><p class="empty">${loaded ? "This watch isn't available." : "Loading…"}</p></div>`);
   const imgs = [...new Set([p.image, ...(p.gallery || [])].filter(Boolean))], d = pct(p), out = p.stock <= 0;
   pg(`<div class="pp"><a class="back" href="#/">&larr; Back to shop</a><div class="pgrid"><div><div class="big" id="big">${imgs[0] ? `<img src="${esc(imgs[0])}" alt="${esc(p.name)}">` : p.svg || ""}</div>${imgs.length > 1 ? `<div class="thumbs">${imgs.map((u, i) => `<button data-img="${esc(u)}" aria-label="Image ${i + 1}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}</div>
-  <div><h1>${esc(p.name)}</h1><div class="price" style="font-size:1.3rem"><b>${inr(d ? p.salePrice : p.price)}</b>${d ? `<s>${inr(p.price)}</s><span class="badge" style="position:static">${d}% off</span>` : ""}</div>
+  <div><div class="nr"><h1>${esc(p.name)}</h1><button class="heart" data-heart="${esc(p.id)}" aria-label="Save to wishlist">${heartI(wish().includes(p.id))}</button></div><div class="price" style="font-size:1.3rem"><b>${inr(d ? p.salePrice : p.price)}</b>${d ? `<s>${inr(p.price)}</s><span class="badge" style="position:static">${d}% off</span>` : ""}</div>
   <p class="stock ${out ? "out" : ""}" style="margin:8px 0">${out ? "Out of stock" : p.stock <= 5 ? `Only ${p.stock} left` : "In stock"}</p>
   ${p.shortDesc ? `<p class="d"><b>${esc(p.shortDesc)}</b></p>` : ""}<p class="d">${esc(p.description)}</p>
   ${out ? "" : `<div class="qty"><button data-q="-1" aria-label="Less">&minus;</button><b id="qv">1</b><button data-q="1" aria-label="More">+</button></div><div class="acts" style="margin-top:16px"><button class="btn" data-padd="${esc(p.id)}">Add to Cart</button><button class="btn p" data-pbuy="${esc(p.id)}">Buy Now</button></div>`}</div></div></div>`);
@@ -356,8 +395,9 @@ function checkoutPage() {
   const ship = sh.enabled === false ? null : (sh.freeAbove > 0 && sub >= sh.freeAbove ? 0 : (sh.charge || 0));
   pg(`<div class="pp"><h2>Checkout</h2><div class="pgrid"><div>${items.map(({ p, q }) => `<div class="crow">${p.image ? `<img src="${esc(p.image)}" alt="">` : p.svg || "<span></span>"}<div><b>${esc(p.name)}</b><div>${inr(price(p))}</div>${q > p.stock ? `<div class="msg e">Only ${p.stock} in stock</div>` : ""}</div><div><div class="qty"><button data-cq="${esc(p.id)}" data-d="-1" aria-label="Less">&minus;</button><b>${q}</b><button data-cq="${esc(p.id)}" data-d="1" aria-label="More">+</button></div><button data-rm="${esc(p.id)}" style="display:block;margin:6px auto 0;font-size:.78rem;text-decoration:underline">Remove</button></div></div>`).join("")}<a href="#/" style="font-weight:600;font-size:.9rem">&larr; Continue shopping</a></div>
   <form id="of" class="fm" novalidate><div class="sum"><div><span>Subtotal</span><b>${inr(sub)}</b></div><div><span>Shipping</span><b>${ship === null ? "Unavailable" : ship ? inr(ship) : "Free"}</b></div><div style="font-size:1.1rem"><span>Total</span><b>${ship === null ? "-" : inr(sub + ship)}</b></div></div>
-  <label>Full name<input name="name" value="${esc(me.displayName || "")}" autocomplete="name"></label><label>Phone number<input name="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel"></label><label>Delivery address<textarea name="line" rows="3" autocomplete="street-address"></textarea></label><label>City<input name="city" autocomplete="address-level2"></label><label>Pincode<input name="pin" inputmode="numeric" maxlength="6" autocomplete="postal-code"></label>
+  <div id="asv"></div><label>Full name<input name="name" value="${esc(me.displayName || "")}" autocomplete="name"></label><label>Phone number<input name="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel"></label><label>Delivery address<textarea name="line" rows="3" autocomplete="street-address"></textarea></label><label>City<input name="city" autocomplete="address-level2"></label><label>Pincode<input name="pin" inputmode="numeric" maxlength="6" autocomplete="postal-code"></label><button class="btn" type="button" data-saveaddr>Save this address</button>
   <p class="msg">Payment: cash on delivery. You can cancel within 6 hours of ordering.</p><button class="btn p" id="po" ${ship === null ? "disabled" : ""}>Place order</button><p class="msg" id="om" role="alert"></p></form></div></div>`);
+  if (addrs) drawAddrStrip(); else loadAddrs().then(() => { if (location.hash === "#/checkout") drawAddrStrip(); });
 }
 
 async function ordersPage() {
@@ -401,17 +441,16 @@ $("page").addEventListener("click", e => {
   if (b = g("cq")) { const c = getCart(), p = products.find(x => x.id === b.dataset.cq); c[b.dataset.cq] = Math.max(1, Math.min((c[b.dataset.cq] || 1) + +b.dataset.d, p?.stock || 1)); setCart(c); checkoutPage(); }
   if (b = g("rm")) { const c = getCart(); delete c[b.dataset.rm]; setCart(c); checkoutPage(); }
   if (b = g("cancel")) cancelOrder(b.dataset.cancel);
+  if (b = g("useaddr")) { const a = addrs.find(x => x.id === b.dataset.useaddr), f = $("of"); if (a && f) { const set = (k, v) => f.elements[k].value = v || ""; set("name", a.name); set("phone", a.phone); set("line", a.line); set("city", a.city); set("pin", a.pin); document.querySelectorAll(".addr").forEach(x => x.classList.toggle("on", x === b)); } }
+  if (g("saveaddr")) saveAddr();
+  if (b = g("deladdr")) delAddr(b.dataset.deladdr);
   if (g("login")) openAuth();
   if (g("logout")) { AU.signOut(AUTH); location.hash = "#/"; }
 });
 $("page").addEventListener("submit", async e => {
   if (e.target.id !== "of") return; e.preventDefault();
   const f = new FormData(e.target), v = k => String(f.get(k) || "").trim(), m = t => { $("om").textContent = t; $("om").className = "msg e"; };
-  if (v("name").length < 2) return m("Enter your full name.");
-  if (!/^[6-9]\d{9}$/.test(v("phone"))) return m("Enter a valid 10-digit mobile number.");
-  if (v("line").length < 8) return m("Enter your full delivery address.");
-  if (!v("city")) return m("Enter your city.");
-  if (!/^\d{6}$/.test(v("pin"))) return m("Enter a valid 6-digit pincode.");
+  const bad = checkAddr(v); if (bad) return m(bad); if (!fresh) return m("Still loading the latest prices. Try again in a moment.");
   const cart = getCart(), items = [];
   for (const id of Object.keys(cart)) {
     const p = products.find(x => x.id === id); if (!p) continue;
@@ -428,16 +467,56 @@ $("page").addEventListener("submit", async e => {
   } catch { $("po").disabled = false; m("We couldn't place your order. Check your connection and try again."); }
 });
 
-/* ---------- Login / sign up (browsing never needs it) ---------- */
+
+/* ---------- Saved addresses, account, wishlist ---------- */
+let addrs = null;
+const addrLine = a => `${esc(a.name)}, ${esc(a.phone)}<br>${esc(a.line)}, ${esc(a.city)} ${esc(a.pin)}`;
+function checkAddr(v) {
+  if (v("name").length < 2) return "Enter your full name.";
+  if (!/^[6-9]\d{9}$/.test(v("phone"))) return "Enter a valid 10-digit mobile number.";
+  if (v("line").length < 8) return "Enter your full delivery address.";
+  if (!v("city")) return "Enter your city.";
+  if (!/^\d{6}$/.test(v("pin"))) return "Enter a valid 6-digit pincode.";
+  return "";
+}
+async function loadAddrs() {
+  try { const sn = await FS.getDocs(FS.collection(DB, "users", me.uid, "addresses")); addrs = sn.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.at?.seconds || 0) - (b.at?.seconds || 0)); }
+  catch { addrs = []; }
+}
+function drawAddrStrip() { const el = $("asv"); if (!el) return; el.innerHTML = addrs?.length ? `<p class="msg">Choose a saved address</p><div class="astrip">${addrs.map(a => `<button type="button" class="addr" data-useaddr="${esc(a.id)}">${addrLine(a)}</button>`).join("")}</div>` : ""; }
+function drawAddrList() { const el = $("al"); if (el) el.innerHTML = addrs.length ? addrs.map(a => `<div class="ord"><div>${addrLine(a)}</div><button class="btn" style="width:fit-content;min-height:38px" data-deladdr="${esc(a.id)}">Delete</button></div>`).join("") : `<p class="empty">No saved addresses yet. You can save one while checking out.</p>`; }
+async function saveAddr() {
+  const f = $("of"), v = k => f.elements[k].value.trim(), m = (t, ok) => { $("om").textContent = t; $("om").className = "msg" + (ok ? "" : " e"); };
+  const bad = checkAddr(v); if (bad) return m(bad);
+  addrs = addrs || []; if (addrs.length >= 10) return m("You can save up to 10 addresses. Delete one in your account first.");
+  const a = { name: v("name"), phone: v("phone"), line: v("line"), city: v("city"), pin: v("pin") };
+  try { const r = await FS.addDoc(FS.collection(DB, "users", me.uid, "addresses"), { ...a, at: FS.serverTimestamp() }); addrs.push({ id: r.id, ...a }); drawAddrStrip(); m("Address saved.", 1); }
+  catch { m("Couldn't save the address. Try again."); }
+}
+async function delAddr(id) {
+  if (!confirm("Delete this address?")) return;
+  try { await FS.deleteDoc(FS.doc(DB, "users", me.uid, "addresses", id)); addrs = addrs.filter(a => a.id !== id); drawAddrList(); } catch { toast("Couldn't delete. Try again."); }
+}
+async function accountPage() {
+  if (!me) return pg(gate("Log in to your account"));
+  pg(`<div class="pp"><h2>My account</h2><div class="sum" style="margin-bottom:16px"><div><span>Name</span><b>${esc(me.displayName || "-")}</b></div><div><span>Email</span><b>${esc(me.email)}</b></div></div><div class="acts" style="margin-bottom:22px"><a class="btn" href="#/orders">My orders</a><a class="btn" href="#/wishlist">Wishlist</a></div><h2 style="font-size:1.1rem">Saved addresses</h2><div id="al"><p class="empty">Loading…</p></div><button class="btn" data-logout style="margin-top:20px">Log out</button></div>`);
+  if (!addrs) await loadAddrs(); if (location.hash === "#/account") drawAddrList();
+}
+function wishlistPage() { const ids = wish(), l = products.filter(p => ids.includes(p.id)); pg(`<div class="pp"><h2>Wishlist</h2>${grid(l, "Tap the heart on a watch to save it here.")}</div>`); }
+
+/* ---------- Login / register (browsing never needs it) ---------- */
 let amode = "in";
-function setMode(m) { amode = m; $("atitle").textContent = m === "in" ? "Log in" : "Create account"; $("an").hidden = m === "in"; $("asw").textContent = m === "in" ? "New here? Create an account" : "Have an account? Log in"; $("amsg").textContent = ""; }
+function setMode(m) { amode = m; $("tin").classList.toggle("on", m === "in"); $("tup").classList.toggle("on", m === "up"); $("an").hidden = m === "in"; $("afg").hidden = m !== "in"; $("ago").textContent = m === "in" ? "Log in" : "Create account"; $("ap").autocomplete = m === "in" ? "current-password" : "new-password"; $("amsg").textContent = ""; }
 function openAuth() { if (!AUTH) { toast("Login isn't available yet."); return; } setMode("in"); $("auth").hidden = false; }
 $("ax").onclick = () => $("auth").hidden = true;
-$("asw").onclick = e => { e.preventDefault(); setMode(amode === "in" ? "up" : "in"); };
+$("tin").onclick = () => setMode("in"); $("tup").onclick = () => setMode("up");
 $("acct").onclick = e => { if (!me) { e.preventDefault(); openAuth(); } };
 $("drawer").onclick = e => { if (e.target.closest("a")) drawer(false); };
+$("ftb").onclick = () => { const o = $("ft").classList.toggle("open"); $("ftb").setAttribute("aria-expanded", o); if (o) setTimeout(() => $("ft").scrollIntoView({ behavior: "smooth", block: "end" }), 50); };
+$("afg").onclick = async e => { e.preventDefault(); const em = $("ae").value.trim(), m = $("amsg"); if (!em) { m.className = "msg e"; m.textContent = "Enter your email first."; return; } try { await AU.sendPasswordResetEmail(AUTH, em); } catch {} m.className = "msg"; m.textContent = "If that email has an account, a reset link is on its way."; };
 $("af").onsubmit = async e => {
   e.preventDefault(); const em = $("ae").value.trim(), pw = $("ap").value, nm = $("an").value.trim(), m = $("amsg"); m.className = "msg e";
+  if (!AUTH) { m.textContent = "Login isn't available yet."; return; }
   if (!em || pw.length < 6) { m.textContent = "Enter your email and a password of at least 6 characters."; return; }
   if (amode === "up" && nm.length < 2) { m.textContent = "Enter your name."; return; }
   $("ago").disabled = true; m.className = "msg"; m.textContent = "Please wait…";
@@ -453,8 +532,14 @@ $("ag").onclick = async () => {
   catch { $("amsg").className = "msg e"; $("amsg").textContent = "Google sign-in didn't complete."; }
 };
 
+/* images fade in once loaded (and never stay invisible) */
+const okImgs = () => document.querySelectorAll("img:not(.ok)").forEach(i => { if (i.complete) i.classList.add("ok"); });
+addEventListener("load", e => { if (e.target.tagName === "IMG") e.target.classList.add("ok"); }, true);
+addEventListener("error", e => { if (e.target.tagName === "IMG") e.target.classList.add("ok"); }, true);
+new MutationObserver(okImgs).observe(document.body, { childList: true, subtree: true });
+
 route();
-render(); renderSocial();
+setLogo(); render(); renderSocial();
 if(FIREBASE_CONFIG) connect().catch(() => { $("state").hidden = false; $("state").textContent = "Couldn't connect. Refresh to try again."; });
 </script>
 </body>
